@@ -19,7 +19,7 @@
 #include "unix_wrap.h"
 
 
-void handle_http_request(int sockfd, char *rootdir)
+void handle_http_request(struct handle_connection_params* params)
 {
     char buf[BUFSIZE];
     char method[HEADERSIZE], uri[BUFSIZE], protocol[HEADERSIZE];
@@ -27,7 +27,7 @@ void handle_http_request(int sockfd, char *rootdir)
     struct stat sbuf;
 
     // Get the first line of header
-    read_line(sockfd, buf, sizeof(buf));
+    read_line(params->cli_fd, buf, sizeof(buf));
 
     // Parse header to three parts
     parse_header(buf, method, uri, protocol);
@@ -35,29 +35,29 @@ void handle_http_request(int sockfd, char *rootdir)
     printf("%s %s %s\n", method, uri, protocol);
 
     // Discard the rest request header
-    while (1) { if (read_line(sockfd, buf, sizeof(buf)) == 0) break; };
+    while (1) { if (read_line(params->cli_fd, buf, sizeof(buf)) == 0) break; };
 
     //Get request method
     if(!strcasecmp(method, "GET")) {
         //URL validation
         if (strlen(uri) > HEADERSIZE)
-            response_400(sockfd);
+            response_400(params->cli_fd);
         else if (strstr(uri, "..") != NULL)
-            response_403(sockfd);
+            response_403(params->cli_fd);
         // Response GET
         else
         {
             // Parse uri to filename
-            filename = parse_uri(sockfd, uri, rootdir);
+            filename = parse_uri(params->cli_fd, uri, root_dir);
             stat(filename, &sbuf);
             if (S_ISDIR(sbuf.st_mode))
                 strncat(filename, "/index.html", 12);
             if (access(filename, F_OK) < 0)
-                response_404(sockfd);
+                response_404(params->cli_fd);
             else
             {
-                set_header(sockfd, 200, filename);
-                serve_file(sockfd, filename);
+                set_header(params->cli_fd, 200, filename);
+                serve_file(params->cli_fd, filename);
             }
             free(filename);
         }
@@ -67,28 +67,28 @@ void handle_http_request(int sockfd, char *rootdir)
     else if(!strcasecmp(method, "HEAD")) {
         // URL validation
         if (strlen(uri) > HEADERSIZE)
-            set_header(sockfd, 400, "./400.html");
+            set_header(params->cli_fd, 400, "./400.html");
         else if (strstr(uri, "..") != NULL)
-            set_header(sockfd, 403, "./403.html");
+            set_header(params->cli_fd, 403, "./403.html");
         // Response HEAD
         else
         {
             //Parse uri to filename
-            filename = parse_uri(sockfd, uri, rootdir);
+            filename = parse_uri(params->cli_fd, uri, root_dir);
             stat(filename, &sbuf);
             if (S_ISDIR(sbuf.st_mode))
                 strncat(filename, "/index.html", 12);
             if (access(filename, F_OK) < 0)
-                set_header(sockfd, 404, "./404.html");
+                set_header(params->cli_fd, 404, "./404.html");
             else
-                set_header(sockfd, 200, filename);
+                set_header(params->cli_fd, 200, filename);
             free(filename);
         }
     }
 
     //Other method - 501 - unimplemented
     else
-        response_501(sockfd);
+        response_501(params->cli_fd);
 
     memset(buf, 0, sizeof(buf));
     memset(method, 0, sizeof(method));

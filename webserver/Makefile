@@ -21,10 +21,10 @@ RM = /bin/rm
 all: $(PROG)
 
 $(PROG): $(OBJS)
-	$(LD) $^ -o $(PROG)
+	$(LD) $^ -o $(PROG) -pthread
 
 $(OBJ_DIR)/%.o: $(SRC_DIR)/%.c
-	$(CC) $(CFLAGS) -c $< -o $@
+	$(CC) $(CFLAGS) -c $< -o $@ 
 
 clean:
 	$(RM) $(PROG) $(OBJS)

@@ -56,8 +56,16 @@ void response_501(int sockfd)
 
 void set_header(int sockfd, int code, const char *filename)
 {
+    char *type;
     // Only adapted to text/html type
-    char *type = "Content-Type: text/html; charset=UTF-8\r\n";
+    if (strstr(filename, ".html"))
+        type = "Content-Type: text/html; charset=UTF-8\r\n";
+    else if(strstr(filename, ".jpg"))
+        type = "Content-Type: image/jpeg; charset=UTF-8\r\n";
+    else {
+        printf("Impossible to reach here!\n");
+        exit(-1);
+    }
 
     // Get property of file(last-modified & content-length)
     char lastmod[HEADERSIZE];

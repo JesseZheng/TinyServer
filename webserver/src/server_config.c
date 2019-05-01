@@ -68,5 +68,6 @@ void get_config(char *configFilePath, struct configItem * configVar, int configN
     }
 
     fclose(fd);
+
 }
 

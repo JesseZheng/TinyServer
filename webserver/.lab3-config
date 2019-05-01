@@ -8,5 +8,5 @@ ROOTDIR=../www
 # Default listen port
 PORT=8080
 
-# Default request handling method (only implemented fork)
-METHOD=fork
+# Default request handling method (fork|thread)
+METHOD=thread
